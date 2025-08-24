@@ -1,0 +1,70 @@
+services:
+  job-api:
+    build: ./job-api
+    container_name: job-api
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mongo
+      - rabbitmq
+    environment:
+      - MONGO_URI=mongodb://mongo:27017
+      - RABBITMQ_HOST=rabbitmq
+      - CELERY_BROKER_URL=pyamqp://guest:guest@rabbitmq:5672//
+    networks:
+      - job-network
+
+  job-frontend:
+    build: ./job-frontend
+    container_name: job-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - job-api
+    environment:
+      - BACKEND_BASE_URL=http://job-api:8000
+    networks:
+      - job-network
+
+  mongo:
+    image: mongo:6.0
+    container_name: mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - job-network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - job-network
+
+  celery:
+    build: ./job-api
+    command: celery -A app.tasks worker --loglevel=info
+    depends_on:
+      - rabbitmq
+      - mongo
+    environment:
+      - MONGO_URI=mongodb://mongo:27017
+      - CELERY_BROKER_URL=pyamqp://guest:guest@rabbitmq:5672//
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - job-network
+
+volumes:
+  mongo-data:
+
+networks:
+  job-network:
+    driver: bridge
+
