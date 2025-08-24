@@ -14,7 +14,7 @@ This project provides:
 ### 1. Clone the repository
 ```bash
 git clone https://github.com/raymondlasses/job-fullstack.git
-cd yourproject
+cd job-fullstack
 ```
 
 ### 2. Start services
